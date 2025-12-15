@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Love Letter</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;600&display=swap" rel="stylesheet">
+
+<style>
+body{
+    margin:0;
+    min-height:100vh;
+    font-family:"Dancing Script",cursive;
+    background:linear-gradient(135deg,#ffd1e6,#ffb3d9);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+.screen{
+    position:absolute;
+    inset:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    transition:opacity .6s ease;
+}
+.hidden{opacity:0;pointer-events:none}
+.btn{
+    padding:14px 36px;
+    font-size:22px;
+    border:none;
+    border-radius:30px;
+    background:#ff4f9a;
+    color:#fff;
+    cursor:pointer;
+    margin-top:20px;
+}
+
+/* PAGE 01 */
+.box{
+    background:#fff;
+    padding:40px;
+    border-radius:16px;
+    width:92%;
+    max-width:450px;
+    text-align:center;
+}
+.name-input,.letter-input{
+    width:100%;
+    padding:12px;
+    font-size:20px;
+    border-radius:10px;
+    border:2px solid #ffb3d9;
+    font-family:"Dancing Script",cursive;
+    margin-bottom:14px;
+}
+.letter-input{height:70px;resize:none}
+.permission{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    color:#ff4f9a;
+    margin:10px 0;
+}
+
+/* ENVELOPE */
+.envelope{
+    position:relative;
+    width:520px;
+    max-width:92%;
+    height:340px;
+    background:#fffdf8;
+    overflow:hidden;
+    box-shadow:0 20px 40px rgba(0,0,0,.25);
+}
+.flap{
+    position:absolute;
+    top:0;
+    width:100%;
+    height:60%;
+    background:#fff7fb;
+    clip-path:polygon(0 0,100% 0,50% 100%);
+    transform-origin:top;
+    transition:transform 1s ease;
+}
+.seal{
+    position:absolute;
+    top:45%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    width:72px;
+    height:72px;
+    border-radius:50%;
+    background:#ff4f9a;
+    color:#fff;
+    font-size:30px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+}
+.envelope.seal-broken .seal{
+    transform:scale(0);
+    opacity:0;
+    transition:.4s;
+}
+.inner-letter{
+    position:absolute;
+    bottom:-100%;
+    left:50%;
+    transform:translateX(-50%);
+    width:90%;
+    background:#fffdf8;
+    padding:30px;
+    text-align:center;
+    transition:bottom 1.2s ease;
+}
+.envelope.open .flap{transform:rotateX(180deg)}
+.envelope.open .inner-letter{bottom:20px}
+
+/* LETTER */
+.page{
+    width:92%;
+    max-width:640px;
+    background:#fffdf8;
+    padding:60px;
+    border-radius:10px;
+}
+.signature{
+    text-align:right;
+    color:#ff4f9a;
+    margin-top:20px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- PAGE 01 -->
+<div class="screen" id="page1">
+<div class="box">
+<h1>Create Your Letter ❤️</h1>
+
+<input id="loveName" class="name-input" placeholder="Your Love's Name">
+<input id="yourName" class="name-input" placeholder="Your Name">
+
+<div class="permission">
+<input type="checkbox" id="allowEdit">
+<label for="allowEdit">Write letter myself</label>
+</div>
+
+<textarea id="p1i" class="letter-input" placeholder="Paragraph 1" disabled></textarea>
+<textarea id="p2i" class="letter-input" placeholder="Paragraph 2" disabled></textarea>
+<textarea id="p3i" class="letter-input" placeholder="Paragraph 3" disabled></textarea>
+
+<button class="btn" id="continueBtn">Continue</button>
+</div>
+</div>
+
+<!-- PAGE 01-2 -->
+<div class="screen hidden" id="page12">
+<div class="envelope" id="envelope">
+<div class="flap"></div>
+<div class="seal" id="seal">❤️</div>
+<div class="inner-letter">
+<h2>💌 A Love Letter</h2>
+<p><b>To:</b> <span id="toName"></span></p>
+<p><b>From:</b> <span id="fromName"></span></p>
+<button class="btn" id="openLetterBtn">Open the Letter</button>
+</div>
+</div>
+</div>
+
+<!-- PAGE 02 -->
+<div class="screen hidden" id="page2">
+<div class="page">
+<h1 id="title"></h1>
+<p id="p1"></p>
+<p id="p2"></p>
+<p id="p3"></p>
+<div class="signature">
+Forever Yours,<br>❤️ <span id="sign"></span>
+</div>
+<button class="btn" id="shareBtn">Generate Share Link</button>
+</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* DOM */
+const page1 = $("page1");
+const page12 = $("page12");
+const page2 = $("page2");
+
+const loveName = $("loveName");
+const yourName = $("yourName");
+const allowEdit = $("allowEdit");
+const p1i = $("p1i");
+const p2i = $("p2i");
+const p3i = $("p3i");
+
+const toName = $("toName");
+const fromName = $("fromName");
+const title = $("title");
+const sign = $("sign");
+
+const p1 = $("p1");
+const p2 = $("p2");
+const p3 = $("p3");
+
+const envelope = $("envelope");
+const seal = $("seal");
+const continueBtn = $("continueBtn");
+const openLetterBtn = $("openLetterBtn");
+const shareBtn = $("shareBtn");
+
+let data = {};
+let opened = false;
+
+/* PERMISSION */
+allowEdit.onchange = () => {
+[p1i,p2i,p3i].forEach(t=>{
+t.disabled = !allowEdit.checked;
+if(!allowEdit.checked) t.value="";
+});
+};
+
+/* PAGE 01 → ENVELOPE */
+continueBtn.onclick = () => {
+data.love = loveName.value || "My Love";
+data.you = yourName.value || "Your Love";
+
+if(allowEdit.checked){
+data.p1 = p1i.value || "";
+data.p2 = p2i.value || "";
+data.p3 = p3i.value || "";
+}else{
+data.p1 = `${data.love}, you came into my life like a beautiful dream.`;
+data.p2 = `Every moment with you feels warm and peaceful.`;
+data.p3 = `No matter what happens, my heart will always choose you.`;
+}
+
+toName.textContent = data.love;
+fromName.textContent = data.you;
+
+page1.classList.add("hidden");
+page12.classList.remove("hidden");
+};
+
+/* ENVELOPE */
+seal.onclick = () => {
+if(opened) return;
+opened = true;
+envelope.classList.add("seal-broken");
+setTimeout(()=>envelope.classList.add("open"),400);
+};
+
+/* OPEN LETTER */
+openLetterBtn.onclick = () => {
+if(!opened){ seal.click(); setTimeout(openLetterBtn.onclick,800); return; }
+
+title.textContent = data.love;
+sign.textContent = data.you;
+p1.textContent = data.p1;
+p2.textContent = data.p2;
+p3.textContent = data.p3;
+
+page12.classList.add("hidden");
+page2.classList.remove("hidden");
+};
+
+/* SHARE LINK */
+shareBtn.onclick = () => {
+const params = new URLSearchParams({
+share:"1",
+love:data.love,
+you:data.you,
+p1:data.p1,
+p2:data.p2,
+p3:data.p3
+});
+const link = location.origin + location.pathname + "?" + params.toString();
+navigator.clipboard.writeText(link);
+alert("Shareable link copied!\n\nYou can share it anywhere.");
+};
+
+/* SHARE MODE */
+const urlParams = new URLSearchParams(location.search);
+if(urlParams.get("share")==="1"){
+data = {
+love:urlParams.get("love"),
+you:urlParams.get("you"),
+p1:urlParams.get("p1"),
+p2:urlParams.get("p2"),
+p3:urlParams.get("p3")
+};
+
+toName.textContent = data.love;
+fromName.textContent = data.you;
+title.textContent = data.love;
+sign.textContent = data.you;
+p1.textContent = data.p1;
+p2.textContent = data.p2;
+p3.textContent = data.p3;
+
+page1.classList.add("hidden");
+page12.classList.remove("hidden");
+}
+</script>
+
+</body>
+</html>
+
